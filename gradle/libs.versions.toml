@@ -1,7 +1,6 @@
 [versions]
 agp = "8.3.2"
 gson = "2.10.1"
-hiltAndroid = "2.48"
 kotlin = "1.9.24"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -17,7 +16,8 @@ navigation = "2.7.7"
 activityKtx = "1.9.0"
 retrofit = "2.11.0"
 kspVersion = "1.9.24-1.0.20"
-hiltVersion = "2.44"
+hiltVersion = "2.48.1"
+databindingRuntime = "8.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,9 +44,10 @@ converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 #Hilt
-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
-hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltAndroid" }
-hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroid" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltVersion" }
+hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hiltVersion" }
+hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltVersion" }
+androidx-databinding-runtime = { group = "androidx.databinding", name = "databinding-runtime", version.ref = "databindingRuntime" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
