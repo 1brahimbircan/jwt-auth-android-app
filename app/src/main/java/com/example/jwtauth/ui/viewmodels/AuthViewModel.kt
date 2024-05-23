@@ -1,59 +1,70 @@
 package com.example.jwtauth.ui.viewmodels
 
+import android.text.TextUtils
+import android.util.Patterns
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.jwtauth.data.entities.ApiResponse
-import com.example.jwtauth.data.entities.TokenResponse
+import com.example.jwtauth.data.entities.AuthRequest
+import com.example.jwtauth.data.entities.AuthResult
 import com.example.jwtauth.data.repositories.AuthRepository
+import com.example.jwtauth.data.entities.NetworkResult
+import com.example.jwtauth.data.entities.TokenResponse
+import com.example.jwtauth.data.entities.User
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(private val authRepo:AuthRepository):ViewModel(){
 
-    private val _loginResponse = MutableStateFlow<TokenResponse?>(null)
-    val loginResponse: StateFlow<TokenResponse?> get() = _loginResponse
+    val userResponseLiveData : LiveData<NetworkResult<ApiResponse>> get() = authRepo.userResponseLiveData
+    val tokenResponseLiveData: LiveData<AuthResult<TokenResponse>> get() = authRepo.tokenResponseLiveData
 
-    private val _registerResponse = MutableStateFlow<ApiResponse?>(null)
-    val registerResponse: StateFlow<ApiResponse?> get() = _registerResponse
 
-    private val _updateResponse = MutableStateFlow<ApiResponse?>(null)
-    val updateResponse: StateFlow<ApiResponse?> get() = _updateResponse
-
-    fun login(email: String, password: String) {
+    fun login(authRequest: AuthRequest) {
         viewModelScope.launch {
-            try {
-                val response = authRepo.login(email, password)
-                _loginResponse.value = response
-            } catch (e: Exception) {
-                _loginResponse.value = TokenResponse(0, "Network Error: ${e.message}", "")
-            }
+            authRepo.login(authRequest)
         }
     }
 
-    fun register(name: String, email: String, password: String) {
+    fun register(user: User) {
         viewModelScope.launch {
-            try {
-                val response = authRepo.register(name, email, password)
-                _registerResponse.value = response
-            } catch (e: Exception) {
-                _registerResponse.value = ApiResponse(0, "Network Error: ${e.message}")
-            }
+            authRepo.register(user)
         }
     }
 
-    fun updateUser(name: String, email: String, password: String) {
+    fun updateUser(user: User) {
         viewModelScope.launch {
-            try {
-                val response = authRepo.update(name, email, password)
-                _updateResponse.value = response
-            } catch (e: Exception) {
-                _updateResponse.value = ApiResponse(0, "Network Error: ${e.message}")
-            }
+            authRepo.update(user)
         }
     }
+
+    fun validateCredentials(fullName: String? = null, emailAddress: String, password: String, confirmPassword: String? = null, isLogin: Boolean): Pair<Boolean, String> {
+        var result = Pair(true, "")
+        if (!isLogin) {
+            if (TextUtils.isEmpty(fullName) || TextUtils.isEmpty(emailAddress) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)) {
+                return Pair(false, "Please provide all the required credentials")
+            }
+            if (password != confirmPassword) {
+                return Pair(false, "Password didn't match, please try again")
+            }
+        } else {
+            if (TextUtils.isEmpty(emailAddress) || TextUtils.isEmpty(password)) {
+                return Pair(false, "Please provide email and password")
+            }
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(emailAddress).matches()) {
+            return Pair(false, "Please provide a valid email")
+        }
+        if (password.length <= 5) {
+            return Pair(false, "Password length should be greater than 5")
+        }
+        return result
+    }
+
+
+
 }
 
 
