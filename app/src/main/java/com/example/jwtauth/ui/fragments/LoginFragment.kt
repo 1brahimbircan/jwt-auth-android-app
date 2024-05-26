@@ -9,84 +9,98 @@ import android.widget.Toast
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import com.example.jwtauth.MainActivity
 import com.example.jwtauth.R
-import com.example.jwtauth.data.entities.AuthRequest
-import com.example.jwtauth.data.entities.AuthResult
-import com.example.jwtauth.data.entities.NetworkResult
-import com.example.jwtauth.data.entities.User
 import com.example.jwtauth.databinding.FragmentLoginBinding
+import com.example.jwtauth.models.UserRequest
 import com.example.jwtauth.ui.viewmodels.AuthViewModel
+import com.example.jwtauth.utils.Helper
+import com.example.jwtauth.utils.LoadingDialog
+import com.example.jwtauth.utils.NetworkResult
+import com.example.jwtauth.utils.TokenManager
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class LoginFragment : Fragment() {
 
-    private lateinit var binding: FragmentLoginBinding
-    private val authViewModel: AuthViewModel by viewModels()
+    private var _binding: FragmentLoginBinding? = null
+    private val binding get() = _binding!!
+
+    private val authViewModel:AuthViewModel by viewModels()
+
+    private lateinit var loadingDialog: LoadingDialog
+
+    @Inject
+    lateinit var tokenManager: TokenManager
+
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = FragmentLoginBinding.inflate(inflater,container,false)
-        // Inflate the layout for this fragment
+        _binding = FragmentLoginBinding.inflate(inflater,container,false)
+        // Initialize the LoadingDialog
+        loadingDialog = LoadingDialog(requireContext())
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        binding.tvHaventAccount.setOnClickListener {
+            findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
+        }
         binding.btnLogin.setOnClickListener {
+            //Helper.hideKeyboard(it)
             val validateResult = validateUserInput()
             if (validateResult.first){
-                authViewModel.login(getUserRequest())
+                val userRequest = getUserRequest()
+                authViewModel.loginUser(userRequest)
             }else{
                 Toast.makeText(context, validateResult.second ,Toast.LENGTH_SHORT).show()
             }
         }
-
-        binding.tvHaventAccount.setOnClickListener {
-            findNavController().navigate(R.id.action_loginFragment_to_registerFragment)
-        }
-
-        bindObserves()
+        bindObservers()
     }
 
-    private fun getUserRequest(): AuthRequest {
+    private fun getUserRequest(): UserRequest {
+        return binding.run {
+            UserRequest(
+                "",
+                etEmail.text.toString(),
+                etPassword.text.toString(),
+            )
+        }
+    }
+    private fun validateUserInput(): Pair<Boolean, String> {
         val emailAddress = binding.etEmail.text.toString()
         val password = binding.etPassword.text.toString()
-        return AuthRequest(emailAddress,password)
+        return authViewModel.validateCredentials(emailAddress, "" , password, password, true)
     }
 
-    private fun validateUserInput():Pair<Boolean,String>{
-        val userRequest = getUserRequest()
-        return authViewModel.validateCredentials(
-            emailAddress = userRequest.email,
-            password = userRequest.password,
-            isLogin = true
-        )
-    }
-
-    private fun bindObserves() {
-        authViewModel.tokenResponseLiveData.observe(viewLifecycleOwner, Observer {
-            when(it){
-                is AuthResult.Authorized -> {
-                    Toast.makeText(context, it.data?.message,Toast.LENGTH_SHORT).show()
-                    val user = getUserRequest()
-                    val bundle = Bundle().apply {
-                        putString("email", user.email)
-                        putString("token", it.data!!.token)
-                    }
-                    findNavController().navigate(R.id.action_loginFragment_to_homeFragment, bundle)
+    private fun bindObservers() {
+        authViewModel.userResponseLiveData.observe(viewLifecycleOwner, Observer {
+            when (it) {
+                is NetworkResult.Success -> {
+                    loadingDialog.dismissDialog()
+                    tokenManager.saveToken(it.data!!.token)
+                    findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                 }
-                is AuthResult.Unauthorized -> {
-                    Toast.makeText(context,it.message,Toast.LENGTH_SHORT).show()
+                is NetworkResult.Error -> {
+                    loadingDialog.dismissDialog()
+                    Toast.makeText(context, it.message.toString() ,Toast.LENGTH_SHORT).show()
                 }
-                is AuthResult.Loading -> {
-                    Toast.makeText(context,"Loading...",Toast.LENGTH_SHORT).show()
+                is NetworkResult.Loading ->{
+                    loadingDialog.startLoadingDialog()
                 }
             }
         })
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
 }

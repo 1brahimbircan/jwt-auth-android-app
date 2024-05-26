@@ -5,65 +5,56 @@ import android.util.Patterns
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.jwtauth.data.entities.ApiResponse
-import com.example.jwtauth.data.entities.AuthRequest
-import com.example.jwtauth.data.entities.AuthResult
-import com.example.jwtauth.data.repositories.AuthRepository
-import com.example.jwtauth.data.entities.NetworkResult
-import com.example.jwtauth.data.entities.TokenResponse
-import com.example.jwtauth.data.entities.User
+import com.example.jwtauth.repository.AuthRepository
+import com.example.jwtauth.models.User
+import com.example.jwtauth.models.UserRequest
+import com.example.jwtauth.models.UserResponse
+import com.example.jwtauth.utils.Helper
+import com.example.jwtauth.utils.NetworkResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 @HiltViewModel
-class AuthViewModel @Inject constructor(private val authRepo:AuthRepository):ViewModel(){
+class AuthViewModel @Inject constructor(private val authRepository: AuthRepository):ViewModel(){
 
-    val userResponseLiveData : LiveData<NetworkResult<ApiResponse>> get() = authRepo.userResponseLiveData
-    val tokenResponseLiveData: LiveData<AuthResult<TokenResponse>> get() = authRepo.tokenResponseLiveData
+    val userResponseLiveData: LiveData<NetworkResult<UserResponse>>
+        get() = authRepository.userResponseLiveData
 
-
-    fun login(authRequest: AuthRequest) {
+    fun registerUser(userRequest: UserRequest) {
         viewModelScope.launch {
-            authRepo.login(authRequest)
+            authRepository.registerUser(userRequest)
+        }
+    }
+    fun loginUser(userRequest: UserRequest) {
+        viewModelScope.launch {
+            authRepository.loginUser(userRequest)
         }
     }
 
-    fun register(user: User) {
+    fun getUser(){
         viewModelScope.launch {
-            authRepo.register(user)
+            authRepository.getUser()
         }
     }
 
-    fun updateUser(user: User) {
-        viewModelScope.launch {
-            authRepo.update(user)
-        }
-    }
+    fun validateCredentials(emailAddress: String, userName: String, password: String, confirmPassword: String,
+                            isLogin: Boolean) : Pair<Boolean, String> {
 
-    fun validateCredentials(fullName: String? = null, emailAddress: String, password: String, confirmPassword: String? = null, isLogin: Boolean): Pair<Boolean, String> {
         var result = Pair(true, "")
-        if (!isLogin) {
-            if (TextUtils.isEmpty(fullName) || TextUtils.isEmpty(emailAddress) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)) {
-                return Pair(false, "Please provide all the required credentials")
-            }
-            if (password != confirmPassword) {
-                return Pair(false, "Password didn't match, please try again")
-            }
-        } else {
-            if (TextUtils.isEmpty(emailAddress) || TextUtils.isEmpty(password)) {
-                return Pair(false, "Please provide email and password")
-            }
+        if(TextUtils.isEmpty(emailAddress) || (!isLogin && TextUtils.isEmpty(userName)) || TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)){
+            result = Pair(false, "Please provide the credentials")
         }
-        if (!Patterns.EMAIL_ADDRESS.matcher(emailAddress).matches()) {
-            return Pair(false, "Please provide a valid email")
+        else if(!Helper.isValidEmail(emailAddress)){
+            result = Pair(false, "Email is invalid")
         }
-        if (password.length <= 5) {
-            return Pair(false, "Password length should be greater than 5")
+        else if(!TextUtils.isEmpty(password) && password.length <= 5){
+            result = Pair(false, "Password length should be greater than 5")
+        }
+        else if(password != confirmPassword){
+            result = Pair(false, "Password doesn't match")
         }
         return result
     }
-
-
 
 }
 

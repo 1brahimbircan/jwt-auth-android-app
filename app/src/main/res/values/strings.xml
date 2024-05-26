@@ -14,11 +14,11 @@
     <string name="login_title">Login to app</string>
     <string name="register_title">Create an account</string>
     <string name="login_sub_title">
-        <font color="#00C988"><b>Login</b></font>
+        <font color="#0088FF"><b>Login</b></font>
         if you already have an account.
     </string>
     <string name="register_sub_title">
-        <font color="#00C988"><b>Register</b></font>
+        <font color="#0088FF"><b>Register</b></font>
         to get started with the app.
     </string>
     <string name="login_email">Your email</string>,
@@ -26,12 +26,12 @@
     <string name="login_forgot_pw">Forgot Password?</string>
     <string name="login_havent_account">
         I don\'t have an account
-        <font color="#00C988"><b>Register</b></font>
+        <font color="#0088FF"><b>Register</b></font>
     </string>
     <string name="register_fullname">Your full name</string>
     <string name="register_confirm_password">Confirm Password</string>,
     <string name="register_have_account">
         I already have an account
-        <font color="#00C988"><b>Login</b></font>
+        <font color="#0088FF"><b>Login</b></font>
     </string>
 </resources>
