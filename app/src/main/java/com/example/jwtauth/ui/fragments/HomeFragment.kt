@@ -1,5 +1,6 @@
 package com.example.jwtauth.ui.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -44,14 +45,16 @@ class HomeFragment : Fragment() {
         bindObservers()
 
     }
+    @SuppressLint("SetTextI18n")
     private fun bindObservers() {
         authViewModel.userResponseLiveData.observe(viewLifecycleOwner, Observer {
             when (it) {
                 is NetworkResult.Success -> {
                     binding.progressBar.visibility = View.GONE
-                    binding.tvName.text = it.data!!.user.name
-                    binding.tvEmail.text = it.data.user.email
-                    binding.tvToken.text = it.data.token
+                    binding.tvUserId.text = "ID: " + it.data!!.user.userId
+                    binding.tvName.text = "NAME: " + it.data.user.name
+                    binding.tvEmail.text = "EMAIL: " + it.data.user.email
+                    binding.tvToken.text = "TOKEN: " + it.data.token
                 }
                 is NetworkResult.Error -> {
                     binding.progressBar.visibility = View.GONE
